@@ -1,0 +1,94 @@
+{
+  "departments": [
+    { "id": "operations", "name": "תפעול", "color": "#2563eb" },
+    { "id": "maintenance", "name": "אחזקה", "color": "#059669" },
+    { "id": "emergency", "name": "צוות חירום", "color": "#dc2626" },
+    { "id": "general", "name": "כללי", "color": "#7c3aed" }
+  ],
+  "weeks": [
+    {
+      "weekNumber": 2,
+      "startDate": "2026-01-03",
+      "endDate": "2026-01-09",
+      "requests": [
+        {
+          "id": "req-0021",
+          "title": "קורס בטיחות אש",
+          "department": "emergency",
+          "status": "pending",
+          "requestedBy": "מחלקת הדרכות",
+          "fixedInfo": {
+            "requestedHours": 2,
+            "requestedDays": ["Sunday", "Monday"],
+            "requestedTrainees": ["חניכים מרשימת המתנה"],
+            "requestedInstructors": ["מדריך מזומן"]
+          },
+          "approvedDays": [],
+          "approvedTimes": [],
+          "approvedTrainees": [],
+          "approvedInstructors": [],
+          "notes": "יש לבחור ימי קורס, שעות, חניכים ומדריכים."
+        },
+        {
+          "id": "req-0022",
+          "title": "קורס תחזוקה יום",
+          "department": "maintenance",
+          "status": "approved",
+          "requestedBy": "מחלקת הדרכות",
+          "fixedInfo": {
+            "requestedHours": 3,
+            "requestedDays": ["Tuesday", "Wednesday"],
+            "requestedTrainees": ["חניכים מרשימת המתנה"],
+            "requestedInstructors": ["מדריכים פנויים"]
+          },
+          "approvedDays": ["Tuesday", "Wednesday"],
+          "approvedTimes": ["06:00-15:00"],
+          "approvedTrainees": ["אמיר כהן", "נועה לוי"],
+          "approvedInstructors": ["רותם זכריה"]
+        },
+        {
+          "id": "req-0023",
+          "title": "קורס תפעול בסיסי",
+          "department": "operations",
+          "status": "rejected",
+          "requestedBy": "מחלקת הדרכות",
+          "fixedInfo": {
+            "requestedHours": 1,
+            "requestedDays": ["Thursday"],
+            "requestedTrainees": ["חניכים זמינים"],
+            "requestedInstructors": ["מדריך מתחם"]
+          },
+          "approvedDays": [],
+          "approvedTimes": [],
+          "approvedTrainees": [],
+          "approvedInstructors": [],
+          "notes": "נדחה בשל חוסר יכולת לכסות משמרת."
+        }
+      ]
+    },
+    {
+      "weekNumber": 3,
+      "startDate": "2026-01-10",
+      "endDate": "2026-01-16",
+      "requests": [
+        {
+          "id": "req-0031",
+          "title": "קורס עזרה ראשונה",
+          "department": "general",
+          "status": "pending",
+          "requestedBy": "מחלקת הדרכות",
+          "fixedInfo": {
+            "requestedHours": 2,
+            "requestedDays": ["Monday", "Wednesday"],
+            "requestedTrainees": ["חניכים מרשימת המתנה"],
+            "requestedInstructors": ["מדריכים פנויים"]
+          },
+          "approvedDays": ["Wednesday"],
+          "approvedTimes": ["15:00-23:00"],
+          "approvedTrainees": ["יוסי מלול"],
+          "approvedInstructors": []
+        }
+      ]
+    }
+  ]
+}
