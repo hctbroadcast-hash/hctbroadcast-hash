@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>דשבורד בקשות הדרכות</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: dark light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    body.rtl { direction: rtl; }
+    header, footer { padding: 16px 20px; background: #1f2937; color: #f8fafc; }
+    header h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    header p { margin: 0; opacity: .76; font-size: .95rem; }
+    .topbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 14px; }
+    .week-nav { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button, .link-button { border: none; cursor: pointer; border-radius: 10px; font-size: .95rem; padding: 10px 14px; }
+    button { background: #2563eb; color: white; }
+    button.secondary { background: #111827; }
+    .link-button { text-decoration: none; background: #e2e8f0; color: #111827; display: inline-flex; align-items: center; }
+    .tabs { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
+    .tabs button { background: #e5e7eb; color: #111827; }
+    .tabs button.active { background: #2563eb; color: white; }
+    #main { padding: 0 20px 24px; }
+    .hidden { display: none; }
+    .message-box { padding: 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 14px; margin-bottom: 18px; }
+    .board-grid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 12px; }
+    .day-card { background: white; border-radius: 16px; border: 1px solid #d1d5db; min-height: 220px; padding: 12px; display: flex; flex-direction: column; }
+    .day-card h3 { margin: 0 0 8px; font-size: .95rem; }
+    .event-card { border-radius: 14px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(15,23,42,.08); border: 1px solid transparent; }
+    .event-card.incomplete { border-color: #dc2626; background: #fee2e2; }
+    .event-card.approved { background: #ecfdf5; }
+    .event-card.rejected { background: #f3f4f6; color: #475569; }
+    .event-card .badge { display: inline-flex; padding: 4px 8px; border-radius: 999px; font-size: .8rem; margin-top: 8px; }
+    .legend { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 10px; margin: 14px 0; }
+    .legend-item { display: inline-flex; align-items: center; gap: 8px; background: white; padding: 10px 12px; border-radius: 12px; border: 1px solid #d1d5db; }
+    .legend-dot { width: 14px; height: 14px; border-radius: 999px; }
+    .table-wrapper { overflow-x: auto; background: white; border-radius: 16px; border: 1px solid #d1d5db; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 12px 14px; text-align: right; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+    th { background: #f8fafc; }
+    .status-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; font-size: .85rem; }
+    .status-pending { background: #fde68a; color: #854d0e; }
+    .status-approved { background: #d1fae5; color: #064e3b; }
+    .status-rejected { background: #fee2e2; color: #991b1b; }
+    .footer-note { opacity: .78; font-size: .95rem; line-height: 1.6; }
+    @media (max-width: 920px) { .board-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 640px) { .board-grid { grid-template-columns: 1fr; } .topbar { flex-direction: column; align-items: stretch; }}
+  </style>
+</head>
+<body class="rtl">
+  <header>
+    <h1>דשבורד בקשות הדרכות</h1>
+    <p>טען את המידע העדכני מ־<code>data.json</code>. לאחר עדכון ב־GitHub, טען מחדש לעמוד.</p>
+    <div class="topbar">
+      <div class="week-nav">
+        <button id="prevWeek">‹ שבוע קודם</button>
+        <span id="weekLabel">טוען...</span>
+        <button id="nextWeek">שבוע הבא ›</button>
+      </div>
+      <div class="actions">
+        <button id="reloadBtn" class="secondary">רענן</button>
+        <a id="editLink" class="link-button" target="_blank" rel="noopener">ערוך data.json ב‑GitHub</a>
+      </div>
+    </div>
+  </header>
+
+  <div id="main">
+    <div class="message-box">
+      <strong>שימו לב:</strong> הדשבורד קורא את הקובץ `data.json` בכל טעינה שלו, ומחדש כל 20 שניות. אם תרצו לשנות בקשות, ערכו את הקובץ ב‑GitHub.
+    </div>
+
+    <div class="tabs">
+      <button data-tab="dashboard" class="active">דשבורד שבועי</button>
+      <button data-tab="table">טבלת בקשות</button>
+    </div>
+
+    <section id="dashboardPanel">
+      <div class="legend" id="legend"></div>
+      <div class="board-grid" id="boardGrid"></div>
+    </section>
+
+    <section id="tablePanel" class="hidden">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>סטטוס</th>
+              <th>שם קורס</th>
+              <th>מחלקה</th>
+              <th>ימים מאושרים</th>
+              <th>שעות מאושרות</th>
+              <th>חניכים</th>
+              <th>מדריכים</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <p class="footer-note">
+      הפעלת האתר מומלצת דרך GitHub Pages. בכל עדכון ל־<code>data.json</code>, יש לרענן את הדף או לחכות עד 20 שניות לטעינה אוטומטית.
+    </p>
+  </footer>
+
+  <script>
+    const repoUrl = 'https://github.com/hctbroadcast-hash';
+    const editUrl = repoUrl + '/edit/main/data.json';
+    const dataFile = 'data.json';
+    const weekLabelEl = document.getElementById('weekLabel');
+    const boardGrid = document.getElementById('boardGrid');
+    const tableBody = document.getElementById('tableBody');
+    const legendEl = document.getElementById('legend');
+    const dashboardPanel = document.getElementById('dashboardPanel');
+    const tablePanel = document.getElementById('tablePanel');
+    const tabs = document.querySelectorAll('.tabs button');
+    const prevBtn = document.getElementById('prevWeek');
+    const nextBtn = document.getElementById('nextWeek');
+    const reloadBtn = document.getElementById('reloadBtn');
+    const editLink = document.getElementById('editLink');
+
+    const dayNames = [
+      {key:'motzei_shabbat', label:'מוצאי שבת'},
+      {key:'Sunday', label:'ראשון'},
+      {key:'Monday', label:'שני'},
+      {key:'Tuesday', label:'שלישי'},
+      {key:'Wednesday', label:'רביעי'},
+      {key:'Thursday', label:'חמישי'},
+      {key:'Friday', label:'שישי'}
+    ];
+
+    const statusLabel = {
+      pending: 'ממתין',
+      approved: 'מאושר',
+      rejected: 'נדחה'
+    };
+
+    let state = {
+      weeks: [],
+      departments: [],
+      currentWeekIndex: 0
+    };
+
+    editLink.href = editUrl;
+
+    function formatDate(value) {
+      const date = new Date(value + 'T00:00:00');
+      if (Number.isNaN(date.getTime())) return value;
+      return date.toLocaleDateString('he-IL', { day:'2-digit', month:'2-digit', year:'numeric' });
+    }
+
+    function createBadge(text, type) {
+      const el = document.createElement('span');
+      el.className = 'badge';
+      el.textContent = text;
+      if (type === 'pending') el.style.backgroundColor = '#fde68a';
+      if (type === 'approved') el.style.backgroundColor = '#d1fae5';
+      if (type === 'rejected') el.style.backgroundColor = '#fee2e2';
+      if (type === 'incomplete') el.style.backgroundColor = '#fecaca';
+      el.style.color = '#111827';
+      return el;
+    }
+
+    function findDepartment(id) {
+      return state.departments.find(dep => dep.id === id) || { name:'כללי', color:'#7c3aed' };
+    }
+
+    function computeMissing(request) {
+      if (request.status === 'rejected') return false;
+      const missingDays = !Array.isArray(request.approvedDays) || request.approvedDays.length === 0;
+      const missingTimes = !Array.isArray(request.approvedTimes) || request.approvedTimes.length === 0;
+      const missingTrainees = !Array.isArray(request.approvedTrainees) || request.approvedTrainees.length === 0;
+      const missingInstructors = !Array.isArray(request.approvedInstructors) || request.approvedInstructors.length === 0;
+      return missingDays || missingTimes || missingTrainees || missingInstructors;
+    }
+
+    function renderLegend() {
+      legendEl.innerHTML = '';
+      state.departments.forEach(dep => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        const dot = document.createElement('span');
+        dot.className = 'legend-dot';
+        dot.style.backgroundColor = dep.color;
+        item.appendChild(dot);
+        item.append(dep.name);
+        legendEl.appendChild(item);
+      });
+    }
+
+    function renderTable(requests) {
+      tableBody.innerHTML = '';
+      requests.forEach(req => {
+        const row = document.createElement('tr');
+        const dep = findDepartment(req.department);
+        const statusClass = req.status === 'approved' ? 'status-approved'
+          : req.status === 'rejected' ? 'status-rejected'
+          : 'status-pending';
+
+        row.innerHTML = `
+          <td><span class="status-chip ${statusClass}">${statusLabel[req.status] || req.status}</span></td>
+          <td>${req.title}</td>
+          <td>${dep.name}</td>
+          <td>${req.approvedDays && req.approvedDays.length ? req.approvedDays.map(d => dayNames.find(x => x.key === d)?.label || d).join(', ') : 'לא נקבע'}</td>
+          <td>${req.approvedTimes && req.approvedTimes.length ? req.approvedTimes.join(', ') : 'לא נקבע'}</td>
+          <td>${req.approvedTrainees && req.approvedTrainees.length ? req.approvedTrainees.join(', ') : 'לא נקבע'}</td>
+          <td>${req.approvedInstructors && req.approvedInstructors.length ? req.approvedInstructors.join(', ') : 'לא נקבע'}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    function renderDashboard(week) {
+      boardGrid.innerHTML = '';
+      const requestByDay = {};
+      dayNames.forEach(day => requestByDay[day.key] = []);
+
+      week.requests.forEach(req => {
+        if (Array.isArray(req.approvedDays) && req.approvedDays.length) {
+          req.approvedDays.forEach(day => {
+            if (requestByDay[day]) requestByDay[day].push(req);
+          });
+        } else {
+          requestByDay['motzei_shabbat'].push(req);
+        }
+      });
+
+      dayNames.forEach(day => {
+        const dayCard = document.createElement('article');
+        dayCard.className = 'day-card';
+        dayCard.innerHTML = `<h3>${day.label}</h3>`;
+        const items = requestByDay[day.key] || [];
+        if (!items.length) {
+          const empty = document.createElement('p');
+          empty.style.opacity = '.75';
+          empty.textContent = 'אין אירועים';
+          dayCard.appendChild(empty);
+        } else {
+          items.forEach(req => {
+            const dep = findDepartment(req.department);
+            const card = document.createElement('div');
+            card.className = 'event-card';
+            if (req.status === 'approved') card.classList.add('approved');
+            if (req.status === 'rejected') card.classList.add('rejected');
+            if (computeMissing(req)) card.classList.add('incomplete');
+            card.style.borderLeft = `4px solid ${dep.color}`;
+            card.innerHTML = `
+              <strong>${req.title}</strong>
+              <div style="margin:8px 0;font-size:.9rem;line-height:1.4;">
+                <div>מחלקה: ${dep.name}</div>
+                <div>סטטוס: ${statusLabel[req.status] || req.status}</div>
+                <div>שעות: ${req.approvedTimes && req.approvedTimes.length ? req.approvedTimes.join(', ') : 'לא נקבע'}</div>
+              </div>
+            `;
+            const badgeText = computeMissing(req) && req.status !== 'rejected' ? 'חסר פרטים' : '';
+            if (badgeText) card.appendChild(createBadge(badgeText, 'incomplete'));
+            dayCard.appendChild(card);
+          });
+        }
+        boardGrid.appendChild(dayCard);
+      });
+    }
+
+    function renderWeek(week) {
+      weekLabelEl.textContent = `שבוע ${week.weekNumber} — מ${formatDate(week.startDate)} עד ${formatDate(week.endDate)}`;
+      renderDashboard(week);
+      renderTable(week.requests);
+    }
+
+    function changeWeek(offset) {
+      const nextIndex = state.currentWeekIndex + offset;
+      if (nextIndex < 0 || nextIndex >= state.weeks.length) return;
+      state.currentWeekIndex = nextIndex;
+      renderWeek(state.weeks[state.currentWeekIndex]);
+    }
+
+    function loadData() {
+      const url = `${dataFile}?cachebust=${Date.now()}`;
+      fetch(url)
+        .then(resp => resp.ok ? resp.json() : Promise.reject(resp.statusText))
+        .then(data => {
+          state.weeks = Array.isArray(data.weeks) ? data.weeks : [];
+          state.departments = Array.isArray(data.departments) ? data.departments : [];
+          renderLegend();
+          if (!state.weeks.length) {
+            weekLabelEl.textContent = 'אין שבועות מוגדרים ב־data.json';
+            boardGrid.innerHTML = '';
+            tableBody.innerHTML = '';
+            return;
+          }
+          if (state.currentWeekIndex >= state.weeks.length) state.currentWeekIndex = 0;
+          renderWeek(state.weeks[state.currentWeekIndex]);
+        })
+        .catch(error => {
+          weekLabelEl.textContent = 'שגיאה בטעינת הנתונים';
+          boardGrid.innerHTML = '';
+          tableBody.innerHTML = '';
+          console.error(error);
+        });
+    }
+
+    tabs.forEach(button => {
+      button.addEventListener('click', () => {
+        tabs.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        if (button.dataset.tab === 'dashboard') {
+          dashboardPanel.classList.remove('hidden');
+          tablePanel.classList.add('hidden');
+        } else {
+          dashboardPanel.classList.add('hidden');
+          tablePanel.classList.remove('hidden');
+        }
+      });
+    });
+
+    prevBtn.addEventListener('click', () => changeWeek(-1));
+    nextBtn.addEventListener('click', () => changeWeek(1));
+    reloadBtn.addEventListener('click', loadData);
+
+    loadData();
+    setInterval(loadData, 20000);
+  </script>
+</body>
+</html>
